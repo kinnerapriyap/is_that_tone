@@ -13,7 +13,9 @@ class RoundOverScreen extends StatelessWidget {
           width: 100,
           child: ElevatedButton(
               child: Center(child: Text('Next round')),
-              onPressed: () => onTapped(true),
+              onPressed: () {
+                Navigator.pop(context);
+              },
               style: TextButton.styleFrom(
                 primary: Colors.black,
                 backgroundColor: Colors.green,

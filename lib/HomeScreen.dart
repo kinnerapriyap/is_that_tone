@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
-  final ValueChanged<bool> onTapped;
-  HomeScreen({this.onTapped});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Is that tone?'),
+      ),
       body: Center(
         child: Container(
           height: 100,
           width: 100,
           child: ElevatedButton(
               child: Center(child: Text('Start')),
-              onPressed: () => onTapped(true),
+              onPressed: () {
+                Navigator.pushNamed(context, '/gameCard');
+              },
               style: TextButton.styleFrom(
                 primary: Colors.black,
                 backgroundColor: Colors.green,

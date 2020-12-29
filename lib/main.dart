@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:is_that_tone/GameCardScreen.dart';
+import 'package:is_that_tone/HomeScreen.dart';
+import 'package:is_that_tone/RoundOverScreen.dart';
+import 'package:is_that_tone/WordCardScreen.dart';
 import 'const.dart';
-import 'routing/ToneRouterDelegate.dart';
-import 'routing/ToneRouteInformationParser.dart';
 
 void main() => runApp(MyApp());
 
@@ -12,20 +13,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ToneRouterDelegate _routerDelegate = ToneRouterDelegate();
-  ToneRouteInformationParser _routeInformationParser =
-      ToneRouteInformationParser();
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return MaterialApp(
       title: 'Is that tone?',
       theme: ThemeData(
         primarySwatch: themeColor,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      routerDelegate: _routerDelegate,
-      routeInformationParser: _routeInformationParser,
+      initialRoute: '/',
+      routes: {
+        '/': (context) => HomeScreen(),
+        '/gameCard': (context) => GameCardScreen(),
+        '/roundOver': (context) => RoundOverScreen(),
+        '/wordCard': (context) => WordCardScreen(),
+      },
     );
   }
 }

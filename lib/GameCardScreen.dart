@@ -3,23 +3,27 @@ import 'dart:collection';
 import 'const.dart';
 
 class GameCardScreen extends StatefulWidget {
-  GameCardScreen(
-      {Key key,
-      @required this.activeRound,
-      @required this.rounds,
-      @required this.onApplyTapped})
-      : super(key: key);
+  // GameCardScreen(
+  //     {Key key,
+  //     @required this.activeRound,
+  //     @required this.rounds,
+  //     @required this.onApplyTapped})
+  //     : super(key: key);
 
-  final int activeRound;
-  final ValueChanged<String> onApplyTapped;
-  final Map<int, String> rounds;
+  // final int activeRound;
+  // final ValueChanged<String> onApplyTapped;
+  // final Map<int, String> rounds;
 
   @override
   _GameCardState createState() => _GameCardState();
 }
 
 class _GameCardState extends State<GameCardScreen> {
-  LinkedHashMap<int, String> _rounds = LinkedHashMap();
+  Map<int, String> _rounds = LinkedHashMap.fromIterable(
+      List<int>.generate(MAX_ROUNDS, (i) => i + 1),
+      key: (item) => item,
+      value: (item) => null);
+  int activeRound = 2;
 
   @override
   void initState() {
@@ -32,18 +36,19 @@ class _GameCardState extends State<GameCardScreen> {
       _rounds = LinkedHashMap.fromIterable(
           List<int>.generate(MAX_ROUNDS, (i) => i + 1),
           key: (item) => item,
-          value: (item) => widget.rounds[item] ?? null);
+          value: (item) => _rounds[item] ?? null);
     });
   }
 
   _applyAnswer() async {
-    widget.onApplyTapped(_rounds[widget.activeRound]);
+    // finish round by sending answer
+    Navigator.pushNamed(context, '/roundOver');
   }
 
   _setNextAnswer() {
-    String _nextAnswer = nextAnswer(_rounds[widget.activeRound]);
+    String _nextAnswer = nextAnswer(_rounds[activeRound]);
     setState(() {
-      _rounds[widget.activeRound] = _nextAnswer ?? 'A';
+      _rounds[activeRound] = _nextAnswer ?? 'A';
     });
   }
 
@@ -102,7 +107,7 @@ class _GameCardState extends State<GameCardScreen> {
   Widget _tile(MapEntry entry) {
     var bgColor;
     var isDisabled = true;
-    if (widget.activeRound == entry.key) {
+    if (activeRound == entry.key) {
       bgColor = Colors.green[50];
       isDisabled = false;
     } else if (entry.value == null) {
