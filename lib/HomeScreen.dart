@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  _start() async {
+    UserCredential userCredential =
+        await FirebaseAuth.instance.signInAnonymously();
+    print(userCredential.toString());
+    Navigator.pushNamed(context, '/gameCard');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -9,13 +22,11 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Center(
         child: Container(
-          height: 100,
+          height: 50,
           width: 100,
           child: ElevatedButton(
               child: Center(child: Text('Start')),
-              onPressed: () {
-                Navigator.pushNamed(context, '/gameCard');
-              },
+              onPressed: () => _start(),
               style: TextButton.styleFrom(
                 primary: Colors.black,
                 backgroundColor: Colors.green,

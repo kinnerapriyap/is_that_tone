@@ -3,17 +3,6 @@ import 'dart:collection';
 import 'const.dart';
 
 class GameCardScreen extends StatefulWidget {
-  // GameCardScreen(
-  //     {Key key,
-  //     @required this.activeRound,
-  //     @required this.rounds,
-  //     @required this.onApplyTapped})
-  //     : super(key: key);
-
-  // final int activeRound;
-  // final ValueChanged<String> onApplyTapped;
-  // final Map<int, String> rounds;
-
   @override
   _GameCardState createState() => _GameCardState();
 }
