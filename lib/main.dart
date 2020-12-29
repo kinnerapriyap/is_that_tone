@@ -17,10 +17,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Is that tone?',
-      theme: ThemeData(
-        primarySwatch: themeColor,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: appTheme,
       initialRoute: '/',
       routes: {
         '/': (context) => HomeScreen(),
