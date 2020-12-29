@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:collection';
+import 'const.dart';
 
-class GameCard extends StatefulWidget {
-  GameCard({Key key, @required this.activeRound}) : super(key: key);
+class GameCardScreen extends StatefulWidget {
+  GameCardScreen(
+      {Key key,
+      @required this.activeRound,
+      @required this.rounds,
+      @required this.onApplyTapped})
+      : super(key: key);
 
   final int activeRound;
+  final ValueChanged<String> onApplyTapped;
+  final Map<int, String> rounds;
 
   @override
   _GameCardState createState() => _GameCardState();
 }
 
-class _GameCardState extends State<GameCard> {
+class _GameCardState extends State<GameCardScreen> {
   LinkedHashMap<int, String> _rounds = LinkedHashMap();
 
   @override
@@ -21,17 +28,16 @@ class _GameCardState extends State<GameCard> {
   }
 
   _loadRounds() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _rounds = LinkedHashMap.fromIterable(List<int>.generate(8, (i) => i + 1),
+      _rounds = LinkedHashMap.fromIterable(
+          List<int>.generate(MAX_ROUNDS, (i) => i + 1),
           key: (item) => item,
-          value: (item) => prefs.getString(item.toString()) ?? null);
+          value: (item) => widget.rounds[item] ?? null);
     });
   }
 
   _applyAnswer() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString(widget.activeRound.toString(), _rounds[widget.activeRound]);
+    widget.onApplyTapped(_rounds[widget.activeRound]);
   }
 
   _setNextAnswer() {
@@ -56,9 +62,6 @@ class _GameCardState extends State<GameCard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Is that tone?'),
-      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
