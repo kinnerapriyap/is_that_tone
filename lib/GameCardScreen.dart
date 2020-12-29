@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:collection';
-import 'const.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class GameCardScreen extends StatefulWidget {
   @override
@@ -8,37 +9,26 @@ class GameCardScreen extends StatefulWidget {
 }
 
 class _GameCardState extends State<GameCardScreen> {
-  Map<int, String> _rounds = LinkedHashMap.fromIterable(
-      List<int>.generate(MAX_ROUNDS, (i) => i + 1),
-      key: (item) => item,
-      value: (item) => null);
-  int activeRound = 2;
+  int _activeRound;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadRounds();
+  Future<void> setFinalAnswer(String finalAnswer) {
+    String uid = FirebaseAuth.instance.currentUser.uid.toString();
+    return FirebaseFirestore.instance
+        .collection('rooms')
+        .doc('BearClaw')
+        .update({
+          "$uid.$_activeRound": finalAnswer,
+          //"activeRound": _activeRound + 1,
+        })
+        .then((value) => print("User Updated"))
+        .catchError((error) => print("Failed to update user: $error"));
   }
 
-  _loadRounds() async {
-    setState(() {
-      _rounds = LinkedHashMap.fromIterable(
-          List<int>.generate(MAX_ROUNDS, (i) => i + 1),
-          key: (item) => item,
-          value: (item) => _rounds[item] ?? null);
-    });
-  }
-
-  _applyAnswer() async {
-    // finish round by sending answer
+  _selectAnswer(String wordId) async {
+    final result =
+        await Navigator.pushNamed(context, '/wordCard', arguments: wordId);
+    await setFinalAnswer(result);
     Navigator.pushNamed(context, '/roundOver');
-  }
-
-  _setNextAnswer() {
-    String _nextAnswer = nextAnswer(_rounds[activeRound]);
-    setState(() {
-      _rounds[activeRound] = _nextAnswer ?? 'A';
-    });
   }
 
   String nextAnswer(currentAnswer) {
@@ -72,41 +62,48 @@ class _GameCardState extends State<GameCardScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _applyAnswer(),
-        label: Text('Apply'),
-        icon: Icon(Icons.check_sharp),
-        backgroundColor: Colors.green,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-  Widget _buildGrid() => GridView.count(
-        crossAxisCount: 2,
-        mainAxisSpacing: 50,
-        crossAxisSpacing: 50,
-        childAspectRatio: 1,
-        padding: const EdgeInsets.fromLTRB(100, 0, 100, 0),
-        children: _rounds.entries.map<Widget>((e) => _tile(e)).toList(),
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-      );
+  Widget _buildGrid() => StreamBuilder(
+      stream: FirebaseFirestore.instance
+          .collection('rooms')
+          .doc('BearClaw')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Text('Loading...');
+        return GridView.count(
+          crossAxisCount: 2,
+          mainAxisSpacing: 50,
+          crossAxisSpacing: 50,
+          childAspectRatio: 1,
+          padding: const EdgeInsets.fromLTRB(100, 0, 100, 0),
+          children: snapshot
+              .data[FirebaseAuth.instance.currentUser.uid.toString()].entries
+              .map<Widget>((e) {
+            _activeRound = int.parse(snapshot.data['activeRound'].toString());
+            return _tile(e, snapshot.data['wordIds'][_activeRound - 1]);
+          }).toList(),
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+        );
+      });
 
-  Widget _tile(MapEntry entry) {
+  Widget _tile(MapEntry entry, String wordId) {
     var bgColor;
     var isDisabled = true;
-    if (activeRound == entry.key) {
+    bool noEntry = entry.value == "";
+    if (_activeRound == int.parse(entry.key)) {
       bgColor = Colors.green[50];
       isDisabled = false;
-    } else if (entry.value == null) {
+    } else if (noEntry) {
       bgColor = Colors.grey;
     } else {
       bgColor = Colors.green[100];
     }
     return ElevatedButton(
-        child: Center(child: Text(entry.value ?? entry.key.toString())),
-        onPressed: isDisabled ? null : () => _setNextAnswer(),
+        child: Center(child: Text(noEntry ? entry.key : entry.value)),
+        onPressed: isDisabled ? null : () => _selectAnswer(wordId),
         style: TextButton.styleFrom(
           primary: Colors.black,
           backgroundColor: bgColor,
