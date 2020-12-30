@@ -15,6 +15,7 @@ class GameCardScreen extends StatefulWidget {
 class _GameCardState extends State<GameCardScreen> {
   StreamSubscription<DocumentSnapshot> streamSub;
   int _activeRound;
+  bool _isActivePlayer = false;
   String _uid;
   String _room;
 
@@ -50,10 +51,16 @@ class _GameCardState extends State<GameCardScreen> {
         FirebaseFirestore.instance.collection('rooms').doc(_room).snapshots();
     ToneAppState appState = Provider.of<ToneAppState>(context, listen: false);
     streamSub = roomSnapshot.listen((snapshot) async {
-      _activeRound = int.parse(snapshot.data()['activeRound'].toString());
       Map<String, dynamic> roundAnswers =
           snapshot.data()[_activeRound.toString()];
+      String uid = FirebaseAuth.instance.currentUser.uid;
       List<dynamic> players = snapshot.data()['uids'];
+
+      _activeRound = int.parse(snapshot.data()['activeRound'].toString());
+      setState(() {
+        _isActivePlayer = players[_activeRound - 1] == uid;
+      });
+
       bool isRoundOver =
           roundAnswers.length == players.length && players.isNotEmpty;
       if (isRoundOver && this.mounted) {
@@ -61,7 +68,7 @@ class _GameCardState extends State<GameCardScreen> {
           // TODO: Game over!
           Navigator.pop(context);
         }
-        if (FirebaseAuth.instance.currentUser.uid == players[0]) {
+        if (_isActivePlayer) {
           await _incrementRound();
         }
         Navigator.pushNamed(context, '/roundOver');
@@ -95,6 +102,14 @@ class _GameCardState extends State<GameCardScreen> {
               'Waiting for players to answer...',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+            SizedBox(height: 50),
+            Text(
+              _isActivePlayer ? 'Your turn to tone!' : 'Listen for tone!',
+              style: TextStyle(
+                fontSize: 12,
               ),
             ),
             SizedBox(height: 50),
