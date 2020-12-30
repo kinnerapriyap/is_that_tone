@@ -10,14 +10,14 @@ class GameCardScreen extends StatefulWidget {
 
 class _GameCardState extends State<GameCardScreen> {
   int _activeRound;
+  String _uid;
 
   Future<void> setFinalAnswer(String finalAnswer) {
-    String uid = FirebaseAuth.instance.currentUser.uid.toString();
     return FirebaseFirestore.instance
         .collection('rooms')
         .doc('BearClaw')
         .update({
-          "$uid.$_activeRound": finalAnswer,
+          "$_activeRound.$_uid": finalAnswer,
           //"activeRound": _activeRound + 1,
         })
         .then((value) => print("User Updated"))
@@ -25,22 +25,17 @@ class _GameCardState extends State<GameCardScreen> {
   }
 
   _selectAnswer(String wordId) async {
-    final result =
+    final finalAnswer =
         await Navigator.pushNamed(context, '/wordCard', arguments: wordId);
-    await setFinalAnswer(result);
+    if (finalAnswer == null) return;
+    await setFinalAnswer(finalAnswer);
     Navigator.pushNamed(context, '/roundOver');
   }
 
-  String nextAnswer(currentAnswer) {
-    ListQueue<String> allowedAnswers = ListQueue.of(List<String>.generate(
-            8, (i) => String.fromCharCode('A'.codeUnitAt(0) + i))
-        .where((value) => value != null));
-    var iterator = allowedAnswers.iterator;
-    while (iterator.current != currentAnswer) {
-      iterator.moveNext();
-    }
-    iterator.moveNext();
-    return iterator.current;
+  @override
+  void initState() {
+    _uid = FirebaseAuth.instance.currentUser.uid.toString();
+    super.initState();
   }
 
   @override
@@ -78,22 +73,24 @@ class _GameCardState extends State<GameCardScreen> {
           crossAxisSpacing: 50,
           childAspectRatio: 1,
           padding: const EdgeInsets.fromLTRB(100, 0, 100, 0),
-          children: snapshot
-              .data[FirebaseAuth.instance.currentUser.uid.toString()].entries
-              .map<Widget>((e) {
+          children: List.generate(2, (i) => i + 1).map((round) {
             _activeRound = int.parse(snapshot.data['activeRound'].toString());
-            return _tile(e, snapshot.data['wordIds'][_activeRound - 1]);
+            Map<String, dynamic> currentAnswers =
+                snapshot.data[round.toString()];
+            String value = currentAnswers[_uid] ?? "";
+            return _tile(
+                round, value, snapshot.data['wordIds'][_activeRound - 1]);
           }).toList(),
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
         );
       });
 
-  Widget _tile(MapEntry entry, String wordId) {
+  Widget _tile(int round, String value, String wordId) {
     var bgColor;
     var isDisabled = true;
-    bool noEntry = entry.value == "";
-    if (_activeRound == int.parse(entry.key)) {
+    bool noEntry = value == "";
+    if (_activeRound == round) {
       bgColor = Colors.green[50];
       isDisabled = false;
     } else if (noEntry) {
@@ -102,7 +99,7 @@ class _GameCardState extends State<GameCardScreen> {
       bgColor = Colors.green[100];
     }
     return ElevatedButton(
-        child: Center(child: Text(noEntry ? entry.key : entry.value)),
+        child: Center(child: Text(noEntry ? round.toString() : value)),
         onPressed: isDisabled ? null : () => _selectAnswer(wordId),
         style: TextButton.styleFrom(
           primary: Colors.black,
