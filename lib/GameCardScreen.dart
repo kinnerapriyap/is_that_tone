@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:is_that_tone/ToneAppState.dart';
+import 'package:is_that_tone/WordCardScreen.dart';
 import 'package:provider/provider.dart';
 
 class GameCardScreen extends StatefulWidget {
@@ -27,9 +28,9 @@ class _GameCardState extends State<GameCardScreen> {
     });
   }
 
-  _selectAnswer(String wordId) async {
+  _selectAnswer(WordArguments args) async {
     final finalAnswer =
-        await Navigator.pushNamed(context, '/wordCard', arguments: wordId);
+        await Navigator.pushNamed(context, '/wordCard', arguments: args);
     if (finalAnswer == null) return;
     await setFinalAnswer(finalAnswer);
   }
@@ -107,7 +108,7 @@ class _GameCardState extends State<GameCardScreen> {
   Widget _buildGrid() =>
       Consumer<ToneAppState>(builder: (context, appState, child) {
         if (appState.room == null) return const Text('Loading...');
-        print(appState.room);
+        List<String> usedAnswers = [];
         return StreamBuilder(
             stream: FirebaseFirestore.instance
                 .collection('rooms')
@@ -123,11 +124,11 @@ class _GameCardState extends State<GameCardScreen> {
                 padding: const EdgeInsets.fromLTRB(100, 0, 100, 0),
                 children: List.generate(appState.maxRounds, (i) => i + 1)
                     .map((round) {
-                  Map<String, dynamic> currentAnswers =
-                      snapshot.data[round.toString()];
-                  String value = currentAnswers[_uid] ?? "";
-                  return _tile(
-                      round, value, snapshot.data['wordIds'][_activeRound - 1]);
+                  String currentAnswer = snapshot.data[round.toString()][_uid];
+                  if (currentAnswer != null) usedAnswers.add(currentAnswer);
+                  WordArguments args = WordArguments(
+                      snapshot.data['wordIds'][_activeRound - 1], usedAnswers);
+                  return _tile(round, currentAnswer ?? "", args);
                 }).toList(),
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
@@ -135,7 +136,7 @@ class _GameCardState extends State<GameCardScreen> {
             });
       });
 
-  Widget _tile(int round, String value, String wordId) {
+  Widget _tile(int round, String value, WordArguments args) {
     var bgColor;
     var isDisabled = true;
     bool noEntry = value == "";
@@ -149,7 +150,7 @@ class _GameCardState extends State<GameCardScreen> {
     }
     return ElevatedButton(
         child: Center(child: Text(noEntry ? round.toString() : value)),
-        onPressed: isDisabled ? null : () => _selectAnswer(wordId),
+        onPressed: isDisabled ? null : () => _selectAnswer(args),
         style: TextButton.styleFrom(
           primary: Colors.black,
           backgroundColor: bgColor,
