@@ -56,10 +56,11 @@ class _GameCardState extends State<GameCardScreen> {
       bool isRoundOver =
           roundAnswers.length == players.length && players.isNotEmpty;
       if (isRoundOver && this.mounted) {
-        if (_activeRound >= appState.maxRounds)
+        if (_activeRound >= appState.maxRounds) {
           // TODO: Game over!
           Navigator.pop(context);
-        else if (FirebaseAuth.instance.currentUser.uid == players[0]) {
+        }
+        if (FirebaseAuth.instance.currentUser.uid == players[0]) {
           await _incrementRound();
         }
         Navigator.pushNamed(context, '/roundOver');
