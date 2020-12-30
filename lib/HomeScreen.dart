@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       DocumentSnapshot freshSnap = await transaction
           .get(FirebaseFirestore.instance.collection('rooms').doc(room));
       List<dynamic> players = freshSnap.data()['uids'];
-      players.add(uid);
+      if (!players.contains(uid)) players.add(uid);
       transaction.update(freshSnap.reference, {
         "uids": players,
       });
