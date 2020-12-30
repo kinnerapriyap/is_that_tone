@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _joinRound(String uid, String room) {
-    return FirebaseFirestore.instance.runTransaction((transaction) async {
+    FirebaseFirestore.instance.runTransaction((transaction) async {
       DocumentSnapshot freshSnap = await transaction
           .get(FirebaseFirestore.instance.collection('rooms').doc(room));
       List<dynamic> players = freshSnap.data()['uids'];
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
   _start() async {
     String uid = await _registerUser();
     ToneAppState appState = Provider.of<ToneAppState>(context, listen: false);
-    appState.room = _controller.text;
+    appState.room = _controller.text.trim();
     _createRound(uid, appState.room, appState.maxRounds);
     Navigator.pushNamed(context, '/gameCard');
   }
