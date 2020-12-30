@@ -8,9 +8,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   _start() async {
-    UserCredential userCredential =
-        await FirebaseAuth.instance.signInAnonymously();
-    print(userCredential.toString());
+    if (FirebaseAuth.instance.currentUser == null) {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInAnonymously();
+      print(userCredential.toString());
+    }
     Navigator.pushNamed(context, '/gameCard');
   }
 
