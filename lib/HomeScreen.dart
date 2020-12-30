@@ -23,7 +23,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _createRound(String uid, String room, int maxRounds) {
+  _createRound(String uid, String room, int maxRounds) {
+    DocumentReference ref =
+        FirebaseFirestore.instance.collection('rooms').doc(room);
     Map<String, dynamic> initialValues = {
       "activeRound": 1,
       "wordIds": ["edo", "sare"],
@@ -31,13 +33,15 @@ class _HomeScreenState extends State<HomeScreen> {
     };
     initialValues.addEntries(List.generate(maxRounds, (i) => i + 1)
         .map((e) => MapEntry(e.toString(), {})));
-    return FirebaseFirestore.instance
-        .collection('rooms')
-        .doc(room)
-        .set(initialValues);
+    ref.get().then((docSnapshot) => {
+          if (docSnapshot.exists)
+            _joinRound(uid, room)
+          else
+            ref.set(initialValues)
+        });
   }
 
-  Future<void> _joinRound(String uid, String room) {
+  _joinRound(String uid, String room) {
     return FirebaseFirestore.instance.runTransaction((transaction) async {
       DocumentSnapshot freshSnap = await transaction
           .get(FirebaseFirestore.instance.collection('rooms').doc(room));
@@ -49,15 +53,11 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  _start(bool isCreate) async {
+  _start() async {
     String uid = await _registerUser();
     ToneAppState appState = Provider.of<ToneAppState>(context, listen: false);
     appState.room = _controller.text;
-    if (isCreate) {
-      await _createRound(uid, appState.room, appState.maxRounds);
-    } else {
-      await _joinRound(uid, appState.room);
-    }
+    _createRound(uid, appState.room, appState.maxRounds);
     Navigator.pushNamed(context, '/gameCard');
   }
 
@@ -91,22 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 50,
               width: 200,
               child: ElevatedButton(
-                  child: Center(child: Text('Create game')),
-                  onPressed: () => _start(true),
-                  style: TextButton.styleFrom(
-                    primary: Colors.black,
-                    backgroundColor: Colors.green,
-                    shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10))),
-                  )),
-            ),
-            SizedBox(height: 20),
-            Container(
-              height: 50,
-              width: 200,
-              child: ElevatedButton(
                   child: Center(child: Text('Join game')),
-                  onPressed: () => _start(false),
+                  onPressed: () => _start(),
                   style: TextButton.styleFrom(
                     primary: Colors.black,
                     backgroundColor: Colors.green,
