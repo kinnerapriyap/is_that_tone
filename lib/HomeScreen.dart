@@ -54,10 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
     ToneAppState appState = Provider.of<ToneAppState>(context, listen: false);
     appState.room = _controller.text;
     if (isCreate) {
-      appState.isCreator = true;
       await _createRound(uid, appState.room, appState.maxRounds);
     } else {
-      appState.isCreator = false;
       await _joinRound(uid, appState.room);
     }
     Navigator.pushNamed(context, '/gameCard');

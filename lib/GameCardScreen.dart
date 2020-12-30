@@ -59,7 +59,7 @@ class _GameCardState extends State<GameCardScreen> {
         if (_activeRound >= appState.maxRounds)
           // TODO: Game over!
           Navigator.pop(context);
-        else if (appState.isCreator) {
+        else if (FirebaseAuth.instance.currentUser.uid == players[0]) {
           await _incrementRound();
         }
         Navigator.pushNamed(context, '/roundOver');
