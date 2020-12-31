@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,24 +13,36 @@ class GameCardScreen extends StatefulWidget {
 
 class _GameCardState extends State<GameCardScreen> {
   StreamSubscription<DocumentSnapshot> streamSub;
+
+  Map<int, String> _usedAnswers = {};
+  Map<String, dynamic> _wordCardMap = {};
   int _activeRound;
   bool _isActivePlayer = false;
   String _uid;
   String _room;
 
-  Future<void> setFinalAnswer(String finalAnswer) {
+  Future<void> setFinalAnswer(int finalAnswer) {
     return FirebaseFirestore.instance.runTransaction((transaction) async {
       DocumentSnapshot freshSnap = await transaction
           .get(FirebaseFirestore.instance.collection('rooms').doc(_room));
       transaction.update(freshSnap.reference, {
-        "$_activeRound.$_uid": finalAnswer,
+        "$_activeRound.$_uid": finalAnswer.toString(),
       });
     });
   }
 
-  _selectAnswer(WordArguments args) async {
-    final finalAnswer =
-        await Navigator.pushNamed(context, '/wordCard', arguments: args);
+  Future<Map<String, dynamic>> _getWordCard(List<String> usedWords) async {
+    QuerySnapshot result = await FirebaseFirestore.instance
+        .collection('wordCards')
+        .where('word', whereNotIn: usedWords)
+        .limit(1)
+        .get();
+    return result.docs[0].data();
+  }
+
+  _selectAnswer() async {
+    final finalAnswer = await Navigator.pushNamed(context, '/wordCard',
+        arguments: WordArguments(_wordCardMap, _usedAnswers));
     if (finalAnswer == null) return;
     await setFinalAnswer(finalAnswer);
   }
@@ -40,8 +51,15 @@ class _GameCardState extends State<GameCardScreen> {
     return FirebaseFirestore.instance.runTransaction((transaction) async {
       DocumentSnapshot freshSnap = await transaction
           .get(FirebaseFirestore.instance.collection('rooms').doc(_room));
+      int newRound = freshSnap['activeRound'] + 1;
+      List<String> usedWords = [];
+      freshSnap['wordCards'].forEach((key, value) {
+        usedWords.add(value['word']);
+      });
+      Map newWordCard = await _getWordCard(usedWords);
       transaction.update(freshSnap.reference, {
-        "activeRound": freshSnap['activeRound'] + 1,
+        "activeRound": newRound,
+        "wordCards.$newRound": newWordCard,
       });
     });
   }
@@ -57,15 +75,18 @@ class _GameCardState extends State<GameCardScreen> {
       List<dynamic> players = snapshot.data()['uids'];
 
       _activeRound = int.parse(snapshot.data()['activeRound'].toString());
+      _wordCardMap = snapshot.data()['wordCards'][_activeRound.toString()];
       setState(() {
         _isActivePlayer = players[_activeRound - 1] == uid;
       });
 
+      if (roundAnswers == null) return;
       bool isRoundOver =
           roundAnswers.length == players.length && players.isNotEmpty;
       if (isRoundOver && this.mounted) {
         if (_activeRound >= appState.maxRounds) {
           // TODO: Game over!
+          print("GameOver");
           Navigator.pop(context);
         }
         if (_isActivePlayer) {
@@ -123,7 +144,6 @@ class _GameCardState extends State<GameCardScreen> {
   Widget _buildGrid() =>
       Consumer<ToneAppState>(builder: (context, appState, child) {
         if (appState.room == null) return const Text('Loading...');
-        List<String> usedAnswers = [];
         return StreamBuilder(
             stream: FirebaseFirestore.instance
                 .collection('rooms')
@@ -139,11 +159,11 @@ class _GameCardState extends State<GameCardScreen> {
                 padding: const EdgeInsets.fromLTRB(100, 0, 100, 0),
                 children: List.generate(appState.maxRounds, (i) => i + 1)
                     .map((round) {
-                  String currentAnswer = snapshot.data[round.toString()][_uid];
-                  if (currentAnswer != null) usedAnswers.add(currentAnswer);
-                  WordArguments args = WordArguments(
-                      snapshot.data['wordIds'][_activeRound - 1], usedAnswers);
-                  return _tile(round, currentAnswer ?? "", args);
+                  String answer = snapshot.data[round.toString()][_uid];
+                  if (answer != null) {
+                    _usedAnswers.putIfAbsent(round, () => answer);
+                  }
+                  return _tile(round, answer ?? "");
                 }).toList(),
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
@@ -151,7 +171,7 @@ class _GameCardState extends State<GameCardScreen> {
             });
       });
 
-  Widget _tile(int round, String value, WordArguments args) {
+  Widget _tile(int round, String value) {
     var bgColor;
     var isDisabled = true;
     bool noEntry = value == "";
@@ -165,7 +185,7 @@ class _GameCardState extends State<GameCardScreen> {
     }
     return ElevatedButton(
         child: Center(child: Text(noEntry ? round.toString() : value)),
-        onPressed: isDisabled ? null : () => _selectAnswer(args),
+        onPressed: isDisabled ? null : () => _selectAnswer(),
         style: TextButton.styleFrom(
           primary: Colors.black,
           backgroundColor: bgColor,
