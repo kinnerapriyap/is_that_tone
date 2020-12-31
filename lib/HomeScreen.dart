@@ -23,17 +23,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  _createRound(String uid, String room, int maxRounds) {
+  Future<Map<String, dynamic>> _getInitialWordCard() async {
+    QuerySnapshot result = await FirebaseFirestore.instance
+        .collection('wordCards')
+        .where('language', isEqualTo: 'tl')
+        .limit(1)
+        .get();
+    return result.docs[0].data();
+  }
+
+  _createRound(String uid, String room, int maxRounds) async {
     DocumentReference ref =
         FirebaseFirestore.instance.collection('rooms').doc(room);
+    Map<String, dynamic> wordCard = await _getInitialWordCard();
     Map<String, dynamic> initialValues = {
       "activeRound": 1,
-      "wordIds": ["edo", "sare"],
       "uids": [uid],
     };
     initialValues.addEntries(List.generate(maxRounds, (i) => i + 1)
         .map((e) => MapEntry(e.toString(), {})));
-    ref.get().then((docSnapshot) => {
+    initialValues['wordCards'] = {'1': wordCard};
+    await ref.get().then((docSnapshot) => {
           if (docSnapshot.exists)
             _joinRound(uid, room)
           else
@@ -57,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String uid = await _registerUser();
     ToneAppState appState = Provider.of<ToneAppState>(context, listen: false);
     appState.room = _controller.text.trim();
-    _createRound(uid, appState.room, appState.maxRounds);
+    await _createRound(uid, appState.room, appState.maxRounds);
     Navigator.pushNamed(context, '/gameCard');
   }
 
