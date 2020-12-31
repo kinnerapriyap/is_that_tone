@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'const.dart';
 
 class WordArguments {
-  final String wordId;
-  final List<String> usedAnswers;
+  final Map<String, dynamic> wordCardMap;
+  // word : answer
+  final Map<int, String> used;
 
-  WordArguments(this.wordId, this.usedAnswers);
+  WordArguments(this.wordCardMap, this.used);
 }
 
 class WordCardScreen extends StatefulWidget {
@@ -14,22 +15,32 @@ class WordCardScreen extends StatefulWidget {
 }
 
 class _WordCardState extends State<WordCardScreen> {
-  String _answer;
+  int _result;
 
   _applyAnswer() {
-    Navigator.pop(context, _answer);
+    Navigator.pop(context, _result);
   }
 
   @override
   Widget build(BuildContext context) {
     final WordArguments args = ModalRoute.of(context).settings.arguments;
+    List<dynamic> answers = args.wordCardMap['answers'];
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text('Word: ${args.wordId}'),
-            _buildList(args),
+            Text('Word: ${args.wordCardMap['word']}'),
+            answers == null
+                ? const Text('Loading...')
+                : ListView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    children: answers
+                        .mapIndex<Widget>((e, i) =>
+                            _tile(e, i, args.used.entries.contains(e)))
+                        .toList(),
+                  ),
             ElevatedButton(
                 child: Center(child: Text('Apply')),
                 onPressed: () => _applyAnswer(),
@@ -45,35 +56,18 @@ class _WordCardState extends State<WordCardScreen> {
     );
   }
 
-  Widget _buildList(WordArguments args) => FutureBuilder(
-      future: FirebaseFirestore.instance
-          .collection('wordCards')
-          .doc(args.wordId)
-          .get(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Text('Loading...');
-        Map<String, dynamic> data = snapshot.data.data();
-        return ListView(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          children: data.entries
-              .map<Widget>((e) => _tile(e, args.usedAnswers.contains(e.key)))
-              .toList(),
-        );
-      });
-
-  RadioListTile _tile(MapEntry entry, bool isUsed) => RadioListTile(
-        value: entry.key,
-        groupValue: _answer,
+  RadioListTile _tile(String answer, int index, bool isUsed) => RadioListTile(
+        value: index,
+        groupValue: _result,
         onChanged: isUsed
             ? null
             : (i) {
                 setState(() {
-                  _answer = entry.key;
+                  _result = index;
                 });
               },
         title: Center(
-            child: Text(entry.key + " " + entry.value,
+            child: Text(answer,
                 style: TextStyle(
                   fontWeight: FontWeight.w300,
                   decoration: isUsed ? TextDecoration.lineThrough : null,
