@@ -37,8 +37,8 @@ class _WordCardState extends State<WordCardScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     children: answers
-                        .mapIndex<Widget>((e, i) =>
-                            _tile(e, i, args.used.entries.contains(e)))
+                        .mapIndex<Widget>(
+                            (e, i) => _tile(e, i, args.used.keys.contains(e)))
                         .toList(),
                   ),
             ElevatedButton(
