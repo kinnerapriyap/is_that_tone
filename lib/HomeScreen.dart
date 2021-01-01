@@ -32,17 +32,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return result.docs[0].data();
   }
 
-  _createRound(String uid, String room, int maxRounds) async {
+  _createRound(String uid, String room) async {
     DocumentReference ref =
         FirebaseFirestore.instance.collection('rooms').doc(room);
     Map<String, dynamic> wordCard = await _getInitialWordCard();
     Map<String, dynamic> initialValues = {
       "activeRound": 1,
       "uids": [uid],
+      'wordCards': {'1': wordCard}
     };
-    initialValues.addEntries(List.generate(maxRounds, (i) => i + 1)
-        .map((e) => MapEntry(e.toString(), {})));
-    initialValues['wordCards'] = {'1': wordCard};
     await ref.get().then((docSnapshot) => {
           if (docSnapshot.exists)
             _joinRound(uid, room)
@@ -67,8 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
     String uid = await _registerUser();
     ToneAppState appState = Provider.of<ToneAppState>(context, listen: false);
     appState.room = _controller.text.trim();
-    await _createRound(uid, appState.room, appState.maxRounds);
-    Navigator.pushNamed(context, '/gameCard');
+    await _createRound(uid, appState.room);
+    Navigator.pushNamed(context, '/start');
   }
 
   void initState() {

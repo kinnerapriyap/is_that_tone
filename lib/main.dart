@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:is_that_tone/GameCardScreen.dart';
 import 'package:is_that_tone/HomeScreen.dart';
 import 'package:is_that_tone/RoundOverScreen.dart';
+import 'package:is_that_tone/StartScreen.dart';
 import 'package:is_that_tone/ToneAppState.dart';
 import 'package:is_that_tone/WordCardScreen.dart';
 import 'const.dart';
@@ -48,6 +49,7 @@ class _MyAppState extends State<MyApp> {
       initialRoute: '/',
       routes: {
         '/': (context) => HomeScreen(),
+        '/start': (context) => StartScreen(),
         '/gameCard': (context) => GameCardScreen(),
         '/roundOver': (context) => RoundOverScreen(),
         '/wordCard': (context) => WordCardScreen(),

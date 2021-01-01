@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-const MAX_ROUNDS = 8;
 final appTheme = ThemeData(
   primarySwatch: Colors.green,
   visualDensity: VisualDensity.adaptivePlatformDensity,

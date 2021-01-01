@@ -50,6 +50,7 @@ class _GameCardState extends State<GameCardScreen> {
       String uid = FirebaseAuth.instance.currentUser.uid;
       List<dynamic> players = snapshot.data()['uids'];
       appState.isActivePlayer = players[_activeRound - 1] == uid;
+      appState.maxRounds = snapshot.data()['maxRounds'];
 
       if (roundAnswers == null) return;
       bool isRoundOver =

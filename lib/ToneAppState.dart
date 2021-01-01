@@ -4,7 +4,7 @@ class ToneAppState extends ChangeNotifier {
   bool _initialized = false;
   bool _error = false;
   String room;
-  int maxRounds = 2;
+  int maxRounds;
   bool isActivePlayer = false;
 
   bool get initialized => _initialized;
