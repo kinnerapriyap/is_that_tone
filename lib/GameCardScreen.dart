@@ -59,7 +59,8 @@ class _GameCardState extends State<GameCardScreen> {
         if (_activeRound >= appState.maxRounds) {
           Navigator.pushReplacementNamed(context, '/gameOver');
         } else {
-          Navigator.pushNamed(context, '/roundOver');
+          Navigator.pushNamed(context, '/roundOver',
+              arguments: appState.isActivePlayer);
         }
       }
     });

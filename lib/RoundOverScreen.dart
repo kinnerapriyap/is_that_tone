@@ -34,9 +34,7 @@ class RoundOverScreen extends StatelessWidget {
     });
   }
 
-  _goToNext(BuildContext context) async {
-    bool isActivePlayer =
-        Provider.of<ToneAppState>(context, listen: false).isActivePlayer;
+  _goToNext(BuildContext context, bool isActivePlayer) async {
     if (isActivePlayer) {
       await _incrementRound(context);
     }
@@ -45,6 +43,7 @@ class RoundOverScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isActivePlayer = ModalRoute.of(context).settings.arguments;
     return Scaffold(
       body: Center(
         child: Container(
@@ -52,7 +51,7 @@ class RoundOverScreen extends StatelessWidget {
           width: 100,
           child: ElevatedButton(
               child: Center(child: Text('Next round')),
-              onPressed: () => _goToNext(context),
+              onPressed: () => _goToNext(context, isActivePlayer),
               style: TextButton.styleFrom(
                 primary: Colors.black,
                 backgroundColor: Colors.green,
