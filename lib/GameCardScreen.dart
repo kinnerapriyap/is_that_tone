@@ -17,7 +17,6 @@ class _GameCardState extends State<GameCardScreen> {
   Map<int, String> _usedAnswers = {};
   Map<String, dynamic> _wordCardMap = {};
   int _activeRound;
-  bool _isActivePlayer = false;
   String _uid;
   String _room;
 
@@ -69,16 +68,14 @@ class _GameCardState extends State<GameCardScreen> {
         FirebaseFirestore.instance.collection('rooms').doc(_room).snapshots();
     ToneAppState appState = Provider.of<ToneAppState>(context, listen: false);
     streamSub = roomSnapshot.listen((snapshot) async {
+      _activeRound = int.parse(snapshot.data()['activeRound'].toString());
+      _wordCardMap = snapshot.data()['wordCards'][_activeRound.toString()];
+
       Map<String, dynamic> roundAnswers =
           snapshot.data()[_activeRound.toString()];
       String uid = FirebaseAuth.instance.currentUser.uid;
       List<dynamic> players = snapshot.data()['uids'];
-
-      _activeRound = int.parse(snapshot.data()['activeRound'].toString());
-      _wordCardMap = snapshot.data()['wordCards'][_activeRound.toString()];
-      setState(() {
-        _isActivePlayer = players[_activeRound - 1] == uid;
-      });
+      appState.isActivePlayer = players[_activeRound - 1] == uid;
 
       if (roundAnswers == null) return;
       bool isRoundOver =
@@ -88,9 +85,6 @@ class _GameCardState extends State<GameCardScreen> {
           // TODO: Game over!
           print("GameOver");
           Navigator.pop(context);
-        }
-        if (_isActivePlayer) {
-          await _incrementRound();
         }
         Navigator.pushNamed(context, '/roundOver');
       }
@@ -127,13 +121,6 @@ class _GameCardState extends State<GameCardScreen> {
               ),
             ),
             SizedBox(height: 50),
-            Text(
-              _isActivePlayer ? 'Your turn to tone!' : 'Listen for tone!',
-              style: TextStyle(
-                fontSize: 12,
-              ),
-            ),
-            SizedBox(height: 50),
             _buildGrid(),
           ],
         ),
@@ -151,22 +138,36 @@ class _GameCardState extends State<GameCardScreen> {
                 .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) return const Text('Loading...');
-              return GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 50,
-                crossAxisSpacing: 50,
-                childAspectRatio: 1,
-                padding: const EdgeInsets.fromLTRB(100, 0, 100, 0),
-                children: List.generate(appState.maxRounds, (i) => i + 1)
-                    .map((round) {
-                  String answer = snapshot.data[round.toString()][_uid];
-                  if (answer != null) {
-                    _usedAnswers.putIfAbsent(round, () => answer);
-                  }
-                  return _tile(round, answer ?? "");
-                }).toList(),
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    appState.isActivePlayer
+                        ? 'Your turn to tone!'
+                        : 'Listen for tone!',
+                    style: TextStyle(
+                      fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(height: 50),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 50,
+                    crossAxisSpacing: 50,
+                    childAspectRatio: 1,
+                    padding: const EdgeInsets.fromLTRB(100, 0, 100, 0),
+                    children: List.generate(appState.maxRounds, (i) => i + 1)
+                        .map((round) {
+                      String answer = snapshot.data[round.toString()][_uid];
+                      if (answer != null) {
+                        _usedAnswers.putIfAbsent(round, () => answer);
+                      }
+                      return _tile(round, answer ?? "");
+                    }).toList(),
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                  )
+                ],
               );
             });
       });
