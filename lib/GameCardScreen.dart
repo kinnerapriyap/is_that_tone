@@ -57,11 +57,10 @@ class _GameCardState extends State<GameCardScreen> {
           roundAnswers.length == players.length && players.isNotEmpty;
       if (isRoundOver && this.mounted) {
         if (_activeRound >= appState.maxRounds) {
-          // TODO: Game over!
-          print("GameOver");
-          Navigator.pop(context);
+          Navigator.pushReplacementNamed(context, '/gameOver');
+        } else {
+          Navigator.pushNamed(context, '/roundOver');
         }
-        Navigator.pushNamed(context, '/roundOver');
       }
     });
   }

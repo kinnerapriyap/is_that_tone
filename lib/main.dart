@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:is_that_tone/GameCardScreen.dart';
+import 'package:is_that_tone/GameOverScreen.dart';
 import 'package:is_that_tone/HomeScreen.dart';
 import 'package:is_that_tone/RoundOverScreen.dart';
 import 'package:is_that_tone/StartScreen.dart';
@@ -52,6 +53,7 @@ class _MyAppState extends State<MyApp> {
         '/start': (context) => StartScreen(),
         '/gameCard': (context) => GameCardScreen(),
         '/roundOver': (context) => RoundOverScreen(),
+        '/gameOver': (context) => GameOverScreen(),
         '/wordCard': (context) => WordCardScreen(),
       },
     );
