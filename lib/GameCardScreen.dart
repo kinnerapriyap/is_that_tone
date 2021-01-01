@@ -30,37 +30,11 @@ class _GameCardState extends State<GameCardScreen> {
     });
   }
 
-  Future<Map<String, dynamic>> _getWordCard(List<String> usedWords) async {
-    QuerySnapshot result = await FirebaseFirestore.instance
-        .collection('wordCards')
-        .where('word', whereNotIn: usedWords)
-        .limit(1)
-        .get();
-    return result.docs[0].data();
-  }
-
   _selectAnswer() async {
     final finalAnswer = await Navigator.pushNamed(context, '/wordCard',
         arguments: WordArguments(_wordCardMap, _usedAnswers));
     if (finalAnswer == null) return;
     await setFinalAnswer(finalAnswer);
-  }
-
-  Future<void> _incrementRound() {
-    return FirebaseFirestore.instance.runTransaction((transaction) async {
-      DocumentSnapshot freshSnap = await transaction
-          .get(FirebaseFirestore.instance.collection('rooms').doc(_room));
-      int newRound = freshSnap['activeRound'] + 1;
-      List<String> usedWords = [];
-      freshSnap['wordCards'].forEach((key, value) {
-        usedWords.add(value['word']);
-      });
-      Map newWordCard = await _getWordCard(usedWords);
-      transaction.update(freshSnap.reference, {
-        "activeRound": newRound,
-        "wordCards.$newRound": newWordCard,
-      });
-    });
   }
 
   _listenRoom() async {
