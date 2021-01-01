@@ -136,7 +136,11 @@ class _GameCardState extends State<GameCardScreen> {
                       if (answer != null) {
                         _usedAnswers.putIfAbsent(round, () => answer);
                       }
-                      return _tile(round, answer ?? "");
+                      String activePlayer = snapshot.data['uids'][round - 1];
+                      bool hasActivePlayerAnswered =
+                          snapshot.data[round.toString()][activePlayer] != null;
+                      return _tile(round, answer ?? "", appState.isActivePlayer,
+                          hasActivePlayerAnswered);
                     }).toList(),
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
@@ -146,13 +150,19 @@ class _GameCardState extends State<GameCardScreen> {
             });
       });
 
-  Widget _tile(int round, String value) {
+  Widget _tile(int round, String value, bool isActivePlayer,
+      bool hasActivePlayerAnswered) {
     var bgColor;
     var isDisabled = true;
     bool noEntry = value == "";
     if (_activeRound == round) {
       bgColor = Colors.green[50];
-      if (noEntry) isDisabled = false;
+      if (noEntry) {
+        if (isActivePlayer)
+          isDisabled = false;
+        else
+          isDisabled = !hasActivePlayerAnswered;
+      }
     } else if (noEntry) {
       bgColor = Colors.grey;
     } else {
