@@ -10,7 +10,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  TextEditingController _controller;
+  TextEditingController _roomController;
+  TextEditingController _playerController;
 
   Future<String> _registerUser() async {
     User currentUser = FirebaseAuth.instance.currentUser;
@@ -39,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Map<String, dynamic> initialValues = {
       "activeRound": 1,
       "uids": [uid],
+      "playerNames": {uid: _playerController.text.trim()},
       'wordCards': {'1': wordCard}
     };
     await ref.get().then((docSnapshot) => {
@@ -54,9 +56,14 @@ class _HomeScreenState extends State<HomeScreen> {
       DocumentSnapshot freshSnap = await transaction
           .get(FirebaseFirestore.instance.collection('rooms').doc(room));
       List<dynamic> players = freshSnap.data()['uids'];
-      if (!players.contains(uid)) players.add(uid);
+      Map<String, dynamic> playerNames = freshSnap.data()['playerNames'];
+      if (!players.contains(uid)) {
+        players.add(uid);
+        playerNames.addAll({uid: _playerController.text.trim()});
+      }
       transaction.update(freshSnap.reference, {
         "uids": players,
+        "playerNames": playerNames,
       });
     });
   }
@@ -64,18 +71,20 @@ class _HomeScreenState extends State<HomeScreen> {
   _start() async {
     String uid = await _registerUser();
     ToneAppState appState = Provider.of<ToneAppState>(context, listen: false);
-    appState.room = _controller.text.trim();
+    appState.room = _roomController.text.trim();
     await _createRound(uid, appState.room);
     Navigator.pushNamed(context, '/start');
   }
 
   void initState() {
-    _controller = TextEditingController();
+    _roomController = TextEditingController();
+    _playerController = TextEditingController();
     super.initState();
   }
 
   void dispose() {
-    _controller.dispose();
+    _roomController.dispose();
+    _playerController.dispose();
     super.dispose();
   }
 
@@ -90,9 +99,15 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextField(
-              controller: _controller,
+              controller: _roomController,
               decoration: InputDecoration(
                   border: OutlineInputBorder(), hintText: 'Enter a room name'),
+            ),
+            SizedBox(height: 20),
+            TextField(
+              controller: _playerController,
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(), hintText: 'Enter player name'),
             ),
             SizedBox(height: 20),
             Container(

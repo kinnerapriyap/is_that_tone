@@ -37,7 +37,9 @@ class _GameOverScreenState extends State<GameOverScreen> {
                             snapshot.data[round.toString()][players[round - 1]])
                         .where((e) => e == true)
                         .length;
-                    return _tile(uid, score, appState.isActivePlayer);
+                    String playerName = snapshot.data['playerNames'][uid];
+                    return _tile(
+                        playerName, score - 1, appState.isActivePlayer);
                   }).toList(),
                 ),
                 SizedBox(height: 20),
@@ -58,10 +60,10 @@ class _GameOverScreenState extends State<GameOverScreen> {
     );
   }
 
-  Widget _tile(String uid, int score, bool isActivePlayer) {
+  Widget _tile(String playerName, int score, bool isActivePlayer) {
     return Center(
       child: Text(
-        uid + ": " + score.toString(),
+        playerName + ": " + score.toString(),
         style: TextStyle(fontSize: 20),
       ),
     );
